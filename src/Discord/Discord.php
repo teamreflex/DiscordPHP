@@ -77,7 +77,7 @@ class Discord
      *
      * @var int Gateway version.
      */
-    public const GATEWAY_VERSION = 8;
+    public const GATEWAY_VERSION = 9;
 
     /**
      * The client version.
