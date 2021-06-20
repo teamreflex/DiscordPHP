@@ -40,6 +40,7 @@ abstract class Permission extends Part
         'deafen_members' => 0x800000,
         'move_members' => 0x1000000,
         'use_vad' => 0x2000000,
+        'request_to_speak' => (1 << 32),
     ];
 
     /**
@@ -57,6 +58,10 @@ abstract class Permission extends Part
         'read_message_history' => 0x10000,
         'mention_everyone' => 0x20000,
         'use_external_emojis' => 0x40000,
+        'use_slash_commands' => (1 << 31),
+        'manage_threads' => (1 << 34),
+        'use_public_threads' => (1 << 35),
+        'use_private_threads' => (1 << 36),
     ];
 
     /**

@@ -22,6 +22,7 @@ namespace Discord\Parts\Permissions;
  * @property bool $deafen_members
  * @property bool $move_members
  * @property bool $use_vad
+ * @property bool $request_to_speak
  *
  * @property bool $add_reactions
  * @property bool $send_messages
@@ -32,6 +33,10 @@ namespace Discord\Parts\Permissions;
  * @property bool $read_message_history
  * @property bool $mention_everyone
  * @property bool $use_external_emojis
+ * @property bool $use_slash_commands
+ * @property bool $manage_threads
+ * @property bool $use_public_threads
+ * @property bool $use_private_threads
  *
  * @property bool $kick_members
  * @property bool $ban_members
