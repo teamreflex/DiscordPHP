@@ -12,6 +12,7 @@
 namespace Discord\WebSockets\Events;
 
 use Discord\Helpers\Deferred;
+use Discord\Parts\Interactions\Interaction;
 use Discord\WebSockets\Event;
 
 class InteractionCreate extends Event
@@ -22,6 +23,7 @@ class InteractionCreate extends Event
     public function handle(Deferred &$deferred, $data): void
     {
         // do nothing with interactions - pass on to DiscordPHP-Slash
-        $deferred->resolve($data);
+        // $deferred->resolve($data);
+        $deferred->resolve($this->factory->create(Interaction::class, $data, true));
     }
 }
