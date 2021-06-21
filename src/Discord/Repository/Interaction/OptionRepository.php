@@ -11,7 +11,7 @@
 
 namespace Discord\Repository\Interaction;
 
-use Discord\Parts\Interaction\Request\Option;
+use Discord\Parts\Interactions\Request\Option;
 use Discord\Repository\AbstractRepository;
 
 class OptionRepository extends AbstractRepository

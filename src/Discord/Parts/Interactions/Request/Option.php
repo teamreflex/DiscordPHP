@@ -9,7 +9,7 @@
  * with this source code in the LICENSE.md file.
  */
 
-namespace Discord\Parts\Interaction\Request;
+namespace Discord\Parts\Interactions\Request;
 
 use Discord\Parts\Part;
 use Discord\Repository\Interaction\OptionRepository;

@@ -11,6 +11,8 @@
 
 namespace Discord\Builders;
 
+use Discord\Builders\Components\ActionRow;
+use Discord\Builders\Components\Component;
 use Discord\Exceptions\FileNotFoundException;
 use Discord\Helpers\Multipart;
 use Discord\Http\Exceptions\RequestFailedException;
@@ -60,6 +62,13 @@ class MessageBuilder implements JsonSerializable
      * @var array[]
      */
     private $files = [];
+
+    /**
+     * Components to send with this message.
+     *
+     * @var Component[]
+     */
+    private $components = [];
 
     /**
      * Creates a new message builder.
@@ -202,6 +211,46 @@ class MessageBuilder implements JsonSerializable
     }
 
     /**
+     * Adds a component to the message.
+     *
+     * @param Component $component
+     * 
+     * @return $this
+     */
+    public function addComponent(Component $component): self
+    {
+        if (! ($component instanceof ActionRow)) {
+            throw new InvalidArgumentException('You can only add action rows as components to messages. Put your components inside an action row.');
+        }
+
+        if (count($this->components) >= 5) {
+            throw new InvalidArgumentException('You can only add 5 components to a message');
+        }
+
+        $this->components[] = $component;
+
+        return $this;
+    }
+
+    /**
+     * Sets the components of the message. Removes the existing components in the process.
+     * 
+     * @param array $components New message components.
+     * 
+     * @return $this
+     */
+    public function setComponents(array $components): self
+    {
+        $this->components = [];
+
+        foreach ($components as $component) {
+            $this->addComponent($component);
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns the number of files attached to the message.
      *
      * @return int
@@ -286,6 +335,10 @@ class MessageBuilder implements JsonSerializable
                 'message_id' => $this->replyTo->id,
                 'channel_id' => $this->replyTo->channel_id,
             ];
+        }
+
+        if (count($this->components) > 0) {
+            $content['components'] = $this->components;
         }
 
         if ($empty) {
