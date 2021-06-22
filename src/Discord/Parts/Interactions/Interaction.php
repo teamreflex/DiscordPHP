@@ -11,6 +11,9 @@
 
 namespace Discord\Parts\Interactions;
 
+use Discord\Builders\MessageBuilder;
+use Discord\Http\Endpoint;
+use Discord\InteractionResponseType;
 use Discord\Parts\Channel\Channel;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\Guild\Guild;
@@ -18,6 +21,8 @@ use Discord\Parts\Interactions\Request\InteractionData;
 use Discord\Parts\Part;
 use Discord\Parts\User\Member;
 use Discord\Parts\User\User;
+use InvalidArgumentException;
+use React\Promise\ExtendedPromiseInterface;
 
 /**
  * Represents an interaction from Discord.
@@ -134,5 +139,56 @@ class Interaction extends Part
         }
 
         return null;
+    }
+
+    /**
+     * Acknowledges an interaction without returning a response.
+     * Only valid for message component interactions.
+     *
+     * @return ExtendedPromiseInterface
+     */
+    public function acknowledge(): ExtendedPromiseInterface
+    {
+        if ($this->type != Interaction::TYPE_MESSAGE_COMPONENT) {
+            throw new InvalidArgumentException('You can only acknowledge message component interactions.');
+        }
+
+        return $this->respond([
+            'type' => InteractionResponseType::DEFERRED_UPDATE_MESSAGE,
+        ]);
+    }
+
+    /**
+     * Updates the message that the interaction was triggered from.
+     * Only valid for message component interactions.
+     *
+     * @param MessageBuilder $builder The new message content.
+     * 
+     * @return ExtendedPromiseInterface
+     */
+    public function updateMessage(MessageBuilder $builder): ExtendedPromiseInterface
+    {
+        if ($this->type != Interaction::TYPE_MESSAGE_COMPONENT) {
+            throw new InvalidArgumentException('You can only acknowledge message component interactions.');
+        }
+
+        return $this->respond([
+            'type' => InteractionResponseType::UPDATE_MESSAGE,
+            'data' => $builder,
+        ]);
+    }
+
+    /**
+     * Responds to the interaction with a payload.
+     * 
+     * This is a seperate function so that it can be overloaded when responding via
+     * webhook.
+     *
+     * @param array $payload
+     * @return ExtendedPromiseInterface
+     */
+    protected function respond(array $payload): ExtendedPromiseInterface
+    {
+        return $this->http->post(Endpoint::bind('interactions/:interaction_id/:token/callback', $this->id, $this->token), $payload);
     }
 }

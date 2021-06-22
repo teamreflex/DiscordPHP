@@ -211,6 +211,28 @@ class MessageBuilder implements JsonSerializable
     }
 
     /**
+     * Returns the number of files attached to the message.
+     *
+     * @return int
+     */
+    public function numFiles(): int
+    {
+        return count($this->files);
+    }
+
+    /**
+     * Removes all files from the message.
+     *
+     * @return $this
+     */
+    public function clearFiles(): self
+    {
+        $this->files = [];
+
+        return $this;
+    }
+
+    /**
      * Adds a component to the message.
      *
      * @param Component $component
@@ -251,25 +273,13 @@ class MessageBuilder implements JsonSerializable
     }
 
     /**
-     * Returns the number of files attached to the message.
-     *
-     * @return int
+     * Returns all the components in the message.
+     * 
+     * @return Component[]
      */
-    public function numFiles(): int
+    public function getComponents(): array
     {
-        return count($this->files);
-    }
-
-    /**
-     * Removes all files from the message.
-     *
-     * @return $this
-     */
-    public function clearFiles(): self
-    {
-        $this->files = [];
-
-        return $this;
+        return $this->components;
     }
 
     /**

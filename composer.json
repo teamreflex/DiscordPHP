@@ -22,8 +22,15 @@
         "ext-json": "*",
         "ext-zlib": "*",
         "discord-php/http": "^9",
-        "react/child-process": "^0.6.2"
+        "react/child-process": "^0.6.2",
+        "discord/interactions": "dev-main"
     },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/discord/discord-interactions-php.git"
+        }
+    ],
     "require-dev": {
         "symfony/var-dumper": "*",
         "friendsofphp/php-cs-fixer": "^2.16",

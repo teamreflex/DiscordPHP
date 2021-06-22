@@ -55,6 +55,16 @@ class ActionRow extends Component
     }
 
     /**
+     * Returns all the components in the action row.
+     * 
+     * @return Component[]
+     */
+    public function getComponents(): array
+    {
+        return $this->components;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function jsonSerialize(): array

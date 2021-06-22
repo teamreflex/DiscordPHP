@@ -77,6 +77,13 @@ class Button extends Component
     private $listener;
 
     /**
+     * Discord instance when the listener is set.
+     *
+     * @var Discord|null 
+     */
+    private $discord;
+
+    /**
      * Creates a new button.
      *
      * @param int $style Style of the button.
@@ -106,6 +113,39 @@ class Button extends Component
     public static function new(int $style): static
     {
         return new static($style);
+    }
+
+    /**
+     * Sets the style of the button.
+     * 
+     * If the button is originally a link button, the link attribute will be cleared.
+     * If the button was changed to a link button, the listener will be cleared.
+     *
+     * @param int $style
+     * 
+     * @return static
+     */
+    public function setStyle(int $style): static
+    {
+        if (! in_array($style, [
+            self::STYLE_PRIMARY,
+            self::STYLE_SECONDARY,
+            self::STYLE_SUCCESS,
+            self::STYLE_DANGER,
+            self::STYLE_LINK,
+        ])) {
+            throw new InvalidArgumentException('Invalid style.');
+        }
+
+        if ($this->style == self::STYLE_LINK && $style != self::STYLE_LINK) {
+            $this->url = null;
+        } else if ($this->style != self::STYLE_LINK && $style == self::STYLE_LINK && $this->listener && $this->discord) {
+            $this->setListener(null, $this->discord);
+        }
+
+        $this->style = $style;
+
+        return $this;
     }
 
     /**
@@ -228,6 +268,8 @@ class Button extends Component
         if ($this->listener) {
             $discord->removeListener(Event::INTERACTION_CREATE, $this->listener);
         }
+
+        $this->discord = $discord;
 
         if ($callback == null) {
             return $this;
