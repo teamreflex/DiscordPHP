@@ -169,7 +169,7 @@ class Interaction extends Part
     public function updateMessage(MessageBuilder $builder): ExtendedPromiseInterface
     {
         if ($this->type != Interaction::TYPE_MESSAGE_COMPONENT) {
-            throw new InvalidArgumentException('You can only acknowledge message component interactions.');
+            throw new InvalidArgumentException('You can only update messages that occur due to a message component interaction.');
         }
 
         return $this->respond([
