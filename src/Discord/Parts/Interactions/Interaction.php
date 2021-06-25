@@ -189,6 +189,6 @@ class Interaction extends Part
      */
     protected function respond(array $payload): ExtendedPromiseInterface
     {
-        return $this->http->post(Endpoint::bind('interactions/:interaction_id/:token/callback', $this->id, $this->token), $payload);
+        return $this->http->post(Endpoint::bind(Endpoint::INTERACTION_RESPONSE, $this->id, $this->token), $payload);
     }
 }
