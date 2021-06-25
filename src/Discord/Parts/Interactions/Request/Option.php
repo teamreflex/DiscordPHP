@@ -25,17 +25,17 @@ use Discord\Repository\Interaction\OptionRepository;
 class Option extends Part
 {
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $fillable = ['name', 'type', 'value'];
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $visible = ['options'];
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $repositories = [
         'options' => OptionRepository::class,
@@ -54,7 +54,7 @@ class Option extends Part
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getRepositoryAttributes(): array
     {

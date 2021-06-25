@@ -17,12 +17,12 @@ use Discord\Repository\AbstractRepository;
 class OptionRepository extends AbstractRepository
 {
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $class = Option::class;
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $discrim = 'name';
 }

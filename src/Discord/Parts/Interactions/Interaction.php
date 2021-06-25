@@ -12,6 +12,7 @@
 namespace Discord\Parts\Interactions;
 
 use Discord\Builders\MessageBuilder;
+use Discord\Helpers\Multipart;
 use Discord\Http\Endpoint;
 use Discord\InteractionResponseType;
 use Discord\Parts\Channel\Channel;
@@ -23,6 +24,7 @@ use Discord\Parts\User\Member;
 use Discord\Parts\User\User;
 use InvalidArgumentException;
 use React\Promise\ExtendedPromiseInterface;
+use RuntimeException;
 
 /**
  * Represents an interaction from Discord.
@@ -43,23 +45,30 @@ use React\Promise\ExtendedPromiseInterface;
  */
 class Interaction extends Part
 {
-    const TYPE_PING = 1;
-    const TYPE_APPLICATION_COMMAND = 2;
-    const TYPE_MESSAGE_COMPONENT = 3;
+    public const TYPE_PING = 1;
+    public const TYPE_APPLICATION_COMMAND = 2;
+    public const TYPE_MESSAGE_COMPONENT = 3;
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $fillable = ['id', 'application_id', 'type', 'data', 'guild_id', 'channel_id', 'member', 'user', 'token', 'version', 'message'];
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $visible = ['guild', 'channel'];
 
     /**
-     * Returns the data associated with the interaction.
+     * Whether we have responded to the interaction yet.
      *
+     * @var bool
+     */
+    protected $responded = false;
+
+    /**
+     * Returns the data associated with the interaction.
+     *ean.
      * @return InteractionData|null
      */
     protected function getDataAttribute(): ?InteractionData
@@ -163,7 +172,7 @@ class Interaction extends Part
      * Only valid for message component interactions.
      *
      * @param MessageBuilder $builder The new message content.
-     * 
+     *
      * @return ExtendedPromiseInterface
      */
     public function updateMessage(MessageBuilder $builder): ExtendedPromiseInterface
@@ -175,20 +184,143 @@ class Interaction extends Part
         return $this->respond([
             'type' => InteractionResponseType::UPDATE_MESSAGE,
             'data' => $builder,
-        ]);
+        ], $builder->requiresMultipart() ? $builder->toMultipart(false) : null);
+    }
+
+    /**
+     * Retrieves the original interaction response.
+     *
+     * @return ExtendedPromiseInterface<Message>
+     */
+    public function getOriginalResponse(): ExtendedPromiseInterface
+    {
+        if (! $this->responded) {
+            throw new RuntimeException('Interaction has not been responded to.');
+        }
+
+        return $this->http->get(Endpoint::bind(Endpoint::ORIGINAL_INTERACTION_RESPONSE, $this->application_id, $this->token))
+            ->then(function ($response) {
+                return $this->factory->create(Message::class, $response, true);
+            });
+    }
+
+    /**
+     * Edits the original interaction response.
+     *
+     * @param MessageBuilder $builder New message contents.
+     *
+     * @return ExtendedPromiseInterface<Message>
+     */
+    public function editOriginalResponse(MessageBuilder $builder): ExtendedPromiseInterface
+    {
+        if (! $this->responded) {
+            throw new RuntimeException('Interaction has not been responded to.');
+        }
+
+        return (function () use ($builder): ExtendedPromiseInterface {
+            if ($builder->requiresMultipart()) {
+                $multipart = $builder->toMultipart();
+
+                return $this->http->patch(Endpoint::bind(Endpoint::ORIGINAL_INTERACTION_RESPONSE, $this->application_id, $this->token), (string) $multipart, $multipart->getHeaders());
+            }
+
+            return $this->http->patch(Endpoint::bind(Endpoint::ORIGINAL_INTERACTION_RESPONSE, $this->application_id, $this->token), $builder);
+        })()->then(function ($response) {
+            return $this->factory->create(Message::class, $response, true);
+        });
+    }
+
+    /**
+     * Deletes the original interaction response.
+     *
+     * @return ExtendedPromiseInterface
+     */
+    public function deleteOriginalResponse(): ExtendedPromiseInterface
+    {
+        if (! $this->responded) {
+            throw new RuntimeException('Interaction has not been responded to.');
+        }
+
+        return $this->http->delete(Endpoint::bind(Endpoint::ORIGINAL_INTERACTION_RESPONSE, $this->application_id, $this->token));
+    }
+
+    /**
+     * Sends a follow-up message to the interaction.
+     *
+     * @param MessageBuilder $builder   Message to send.
+     * @param bool           $ephemeral Whether the created follow-up should be ephemeral.
+     *
+     * @return ExtendedPromiseInterface<Message>
+     */
+    public function sendFollowUpMessage(MessageBuilder $builder, bool $ephemeral = false): ExtendedPromiseInterface
+    {
+        if (! $this->responded) {
+            throw new RuntimeException('Cannot create a follow-up message as the interaction has not been responded to.');
+        }
+
+        if ($ephemeral) {
+            $builder->_setFlags(64);
+        }
+
+        return (function () use ($builder): ExtendedPromiseInterface {
+            if ($builder->requiresMultipart()) {
+                $multipart = $builder->toMultipart();
+
+                return $this->http->post(Endpoint::bind(Endpoint::CREATE_INTERACTION_FOLLOW_UP, $this->application_id, $this->token), (string) $multipart, $multipart->getHeaders());
+            }
+
+            return $this->http->post(Endpoint::bind(Endpoint::CREATE_INTERACTION_FOLLOW_UP, $this->application_id, $this->token), $builder);
+        })()->then(function ($response) {
+            return $this->factory->create(Message::class, $response, true);
+        });
+    }
+
+    /**
+     * Responds to the interaction with a message.
+     *
+     * @param MessageBuilder $builder Message to respond with.
+     *
+     * @return ExtendedPromiseInterface
+     */
+    public function respondWithMessage(MessageBuilder $builder): ExtendedPromiseInterface
+    {
+        return $this->respond([
+            'type' => InteractionResponseType::CHANNEL_MESSAGE_WITH_SOURCE,
+            'data' => $builder,
+        ], $builder->requiresMultipart() ? $builder->toMultipart(false) : null);
     }
 
     /**
      * Responds to the interaction with a payload.
-     * 
+     *
      * This is a seperate function so that it can be overloaded when responding via
      * webhook.
      *
-     * @param array $payload
+     * @param array          $payload   Response payload.
+     * @param Multipart|null $multipart Optional multipart payload.
+     *
      * @return ExtendedPromiseInterface
      */
-    protected function respond(array $payload): ExtendedPromiseInterface
+    protected function respond(array $payload, ?Multipart $multipart = null): ExtendedPromiseInterface
     {
+        if ($this->responded) {
+            throw new RuntimeException('Interaction has already been responded to.');
+        }
+
+        $this->responded = true;
+
+        if ($multipart) {
+            $multipart->add([
+                'name' => 'payload_json',
+                'content' => json_encode($payload),
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+            ]);
+
+            return $this->http->post(Endpoint::bind(Endpoint::INTERACTION_RESPONSE, $this->id, $this->token), (string) $multipart, $multipart->getHeaders());
+        }
+
         return $this->http->post(Endpoint::bind(Endpoint::INTERACTION_RESPONSE, $this->id, $this->token), $payload);
     }
 }

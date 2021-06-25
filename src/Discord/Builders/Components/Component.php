@@ -15,7 +15,7 @@ use JsonSerializable;
 
 abstract class Component implements JsonSerializable
 {
-    const TYPE_ACTION_ROW = 1;
-    const TYPE_BUTTON = 2;
-    const TYPE_SELECT_MENU = 3;
+    public const TYPE_ACTION_ROW = 1;
+    public const TYPE_BUTTON = 2;
+    public const TYPE_SELECT_MENU = 3;
 }

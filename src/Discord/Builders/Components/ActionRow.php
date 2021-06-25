@@ -56,7 +56,7 @@ class ActionRow extends Component
 
     /**
      * Returns all the components in the action row.
-     * 
+     *
      * @return Component[]
      */
     public function getComponents(): array
@@ -65,7 +65,7 @@ class ActionRow extends Component
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function jsonSerialize(): array
     {

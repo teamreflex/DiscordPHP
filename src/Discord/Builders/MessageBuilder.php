@@ -71,6 +71,13 @@ class MessageBuilder implements JsonSerializable
     private $components = [];
 
     /**
+     * Flags to send with this message.
+     *
+     * @var int|null
+     */
+    private $flags;
+
+    /**
      * Creates a new message builder.
      *
      * @return $this
@@ -236,7 +243,7 @@ class MessageBuilder implements JsonSerializable
      * Adds a component to the message.
      *
      * @param Component $component
-     * 
+     *
      * @return $this
      */
     public function addComponent(Component $component): self
@@ -256,9 +263,9 @@ class MessageBuilder implements JsonSerializable
 
     /**
      * Sets the components of the message. Removes the existing components in the process.
-     * 
+     *
      * @param array $components New message components.
-     * 
+     *
      * @return $this
      */
     public function setComponents(array $components): self
@@ -274,12 +281,28 @@ class MessageBuilder implements JsonSerializable
 
     /**
      * Returns all the components in the message.
-     * 
+     *
      * @return Component[]
      */
     public function getComponents(): array
     {
         return $this->components;
+    }
+
+    /**
+     * Sets the flags of the message.
+     *
+     * @internal You cannot set flags except for when sending webhooks. Use the APIs given.
+     *
+     * @param int $flags
+     *
+     * @return $this
+     */
+    public function _setFlags(int $flags): self
+    {
+        $this->flags = $flags;
+
+        return $this;
     }
 
     /**
@@ -296,19 +319,25 @@ class MessageBuilder implements JsonSerializable
     /**
      * Converts the request to a multipart request.
      *
+     * @internal
+     *
+     * @param bool $payload Whether to include the JSON payload in the response.
+     *
      * @return Multipart
      */
-    public function toMultipart(): Multipart
+    public function toMultipart(bool $payload = true): Multipart
     {
-        $fields = [
-            [
-                'name' => 'payload_json',
-                'content' => json_encode($this),
-                'headers' => [
-                    'Content-Type' => 'application/json',
+        if ($payload) {
+            $fields = [
+                [
+                    'name' => 'payload_json',
+                    'content' => json_encode($this),
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                    ],
                 ],
-            ],
-        ];
+            ];
+        }
 
         foreach ($this->files as $idx => [$filename, $content]) {
             $fields[] = [
@@ -321,6 +350,9 @@ class MessageBuilder implements JsonSerializable
         return new Multipart($fields);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function jsonSerialize(): array
     {
         $empty = count($this->files) < 1;
@@ -333,6 +365,10 @@ class MessageBuilder implements JsonSerializable
 
         if ($this->tts) {
             $content['tts'] = true;
+        }
+
+        if ($this->flags) {
+            $content['flags'] = $this->flags;
         }
 
         if (count($this->embeds) > 0) {

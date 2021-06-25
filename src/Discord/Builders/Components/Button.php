@@ -21,11 +21,11 @@ use function Discord\poly_strlen;
 
 class Button extends Component
 {
-    const STYLE_PRIMARY = 1;
-    const STYLE_SECONDARY = 2;
-    const STYLE_SUCCESS = 3;
-    const STYLE_DANGER = 4;
-    const STYLE_LINK = 5;
+    public const STYLE_PRIMARY = 1;
+    public const STYLE_SECONDARY = 2;
+    public const STYLE_SUCCESS = 3;
+    public const STYLE_DANGER = 4;
+    public const STYLE_LINK = 5;
 
     /**
      * Style of button.
@@ -79,7 +79,7 @@ class Button extends Component
     /**
      * Discord instance when the listener is set.
      *
-     * @var Discord|null 
+     * @var Discord|null
      */
     private $discord;
 
@@ -117,12 +117,12 @@ class Button extends Component
 
     /**
      * Sets the style of the button.
-     * 
+     *
      * If the button is originally a link button, the link attribute will be cleared.
      * If the button was changed to a link button, the listener will be cleared.
      *
      * @param int $style
-     * 
+     *
      * @return static
      */
     public function setStyle(int $style): static
@@ -139,7 +139,7 @@ class Button extends Component
 
         if ($this->style == self::STYLE_LINK && $style != self::STYLE_LINK) {
             $this->url = null;
-        } else if ($this->style != self::STYLE_LINK && $style == self::STYLE_LINK && $this->listener && $this->discord) {
+        } elseif ($this->style != self::STYLE_LINK && $style == self::STYLE_LINK && $this->listener && $this->discord) {
             $this->setListener(null, $this->discord);
         }
 
@@ -291,7 +291,7 @@ class Button extends Component
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function jsonSerialize(): array
     {

@@ -27,17 +27,17 @@ use Discord\Repository\Interaction\OptionRepository;
 class InteractionData extends Part
 {
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $fillable = ['id', 'name', 'resolved', 'options', 'custom_id', 'component_type'];
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $visible = ['options'];
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected $repositories = [
         'options' => OptionRepository::class,
