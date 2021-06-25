@@ -168,6 +168,19 @@ class Interaction extends Part
     }
 
     /**
+     * Acknowledges an interaction, creating a placeholder response message which can be edited later
+     * through the `updateOriginalResponse` function.
+     *
+     * @return ExtendedPromiseInterface
+     */
+    public function acknowledgeWithResponse(): ExtendedPromiseInterface
+    {
+        return $this->respond([
+            'type' => InteractionResponseType::DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+        ]);
+    }
+
+    /**
      * Updates the message that the interaction was triggered from.
      * Only valid for message component interactions.
      *
@@ -205,13 +218,13 @@ class Interaction extends Part
     }
 
     /**
-     * Edits the original interaction response.
+     * Updates the original interaction response.
      *
      * @param MessageBuilder $builder New message contents.
      *
      * @return ExtendedPromiseInterface<Message>
      */
-    public function editOriginalResponse(MessageBuilder $builder): ExtendedPromiseInterface
+    public function updateOriginalResponse(MessageBuilder $builder): ExtendedPromiseInterface
     {
         if (! $this->responded) {
             throw new RuntimeException('Interaction has not been responded to.');
