@@ -29,6 +29,9 @@ use Discord\Parts\Thread\Thread;
 use Discord\Repository\Channel\ReactionRepository;
 use InvalidArgumentException;
 use React\Promise\ExtendedPromiseInterface;
+use RuntimeException;
+
+use function React\Promise\reject;
 
 /**
  * A message which is posted to a Discord text channel.
@@ -500,8 +503,25 @@ class Message extends Part
      */
     public function startThread(string $name, int $auto_archive_duration = 1440): ExtendedPromiseInterface
     {
+        if (! $this->guild) {
+            return reject(new RuntimeException('You can only start threads on guild text channels.'));
+        }
+
         if (! in_array($auto_archive_duration, [60, 1440, 4320, 10080])) {
-            throw new InvalidArgumentException('`auto_archive_duration` must be one of 60, 1440, 4320, 10080.');
+            return reject(new InvalidArgumentException('`auto_archive_duration` must be one of 60, 1440, 4320, 10080.'));
+        }
+
+        switch ($auto_archive_duration) {
+            case 4320:
+                if (! $this->guild->feature_three_day_thread_archive) {
+                    return reject(new RuntimeException('Guild does not have access to three day thread archive.'));
+                }
+                break;
+            case 10080:
+                if (! $this->guild->feature_seven_day_thread_archive) {
+                    return reject(new RuntimeException('Guild does not have access to seven day thread archive.'));
+                }
+                break;
         }
 
         return $this->http->post(Endpoint::bind(Endpoint::CHANNEL_MESSAGE_THREADS, $this->channel_id, $this->id), [

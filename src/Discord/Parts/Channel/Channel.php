@@ -35,6 +35,7 @@ use Discord\Parts\Thread\Thread;
 use Discord\Repository\Channel\ThreadRepository;
 use InvalidArgumentException;
 use React\Promise\ExtendedPromiseInterface;
+use RuntimeException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Traversable;
 
@@ -688,20 +689,37 @@ class Channel extends Part
      */
     public function startThread(string $name, bool $private = false, int $auto_archive_duration = 1440): ExtendedPromiseInterface
     {
+        if ($private && ! $this->guild->feature_private_threads) {
+            return reject(new RuntimeException('Guild does not have access to private threads.'));
+        }
+
         if ($this->type == Channel::TYPE_NEWS) {
             if ($private) {
-                throw new InvalidArgumentException('You cannot start a private thread within a news channel.');
+                return reject(new InvalidArgumentException('You cannot start a private thread within a news channel.'));
             }
 
             $type = Channel::TYPE_NEWS_THREAD;
         } elseif ($this->type == Channel::TYPE_TEXT) {
             $type = $private ? Channel::TYPE_PRIVATE_THREAD : Channel::TYPE_PUBLIC_THREAD;
         } else {
-            throw new InvalidArgumentException('You cannot start a thread in this type of channel.');
+            return reject(new InvalidArgumentException('You cannot start a thread in this type of channel.'));
         }
 
         if (! in_array($auto_archive_duration, [60, 1440, 4320, 10080])) {
-            throw new InvalidArgumentException('`auto_archive_duration` must be one of 60, 1440, 4320, 10080.');
+            return reject(new InvalidArgumentException('`auto_archive_duration` must be one of 60, 1440, 4320, 10080.'));
+        }
+
+        switch ($auto_archive_duration) {
+            case 4320:
+                if (! $this->guild->feature_three_day_thread_archive) {
+                    return reject(new RuntimeException('Guild does not have access to three day thread archive.'));
+                }
+                break;
+            case 10080:
+                if (! $this->guild->feature_seven_day_thread_archive) {
+                    return reject(new RuntimeException('Guild does not have access to seven day thread archive.'));
+                }
+                break;
         }
 
         return $this->http->post(Endpoint::bind(Endpoint::CHANNEL_THREADS, $this->id), [
