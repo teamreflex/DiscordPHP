@@ -26,7 +26,7 @@
     },
     "require-dev": {
         "symfony/var-dumper": "*",
-        "friendsofphp/php-cs-fixer": "^2.16",
+        "friendsofphp/php-cs-fixer": "^3",
         "phpunit/phpunit": "^9.4",
         "davidcole1340/reactsh": "dev-master"
     },
