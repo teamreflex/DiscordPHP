@@ -11,7 +11,6 @@
 
 namespace Discord\Parts\WebSockets;
 
-use Carbon\Carbon;
 use Discord\Helpers\Collection;
 use Discord\Parts\Guild\Guild;
 use Discord\Parts\Guild\Role;
@@ -24,12 +23,18 @@ use Discord\Parts\User\User;
  * A PresenceUpdate part is used when the `PRESENCE_UPDATE` event is fired on the WebSocket. It contains
  * information about the users presence such as their status (online/away) and their current game.
  *
- * @property Member   $member   The member that the presence update affects.
- * @property User     $user     The user that the presence update affects.
- * @property Guild    $guild    The guild that the presence update affects.
- * @property string   $guild_id The unique identifier of the guild that the presence update affects.
- * @property string   $status   The updated status of the user.
- * @property Activity $game     The updated game of the user.
+ * @property Member                $member         The member that the presence update affects.
+ * @property User                  $user           The user that the presence update affects.
+ * @property Guild                 $guild          The guild that the presence update affects.
+ * @property string                $guild_id       The unique identifier of the guild that the presence update affects.
+ * @property string                $status         The updated status of the user.
+ * @property Activity              $game           The updated game of the user.
+ * @property Collection|Activity[] $activities     The activities of the user.
+ * @property Collection|Role[]     $roles          Roles that the user has in the guild.
+ * @property object                $client_status  Status of the client.
+ * @property string|null           $desktop_status Status of the user on their desktop client. Null if they are not active on desktop.
+ * @property string|null           $mobile_status  Status of the user on their mobile client. Null if they are not active on mobile.
+ * @property string|null           $web_status     Status of the user on their web client. Null if they are not active on web.
  */
 class PresenceUpdate extends Part
 {
@@ -39,9 +44,14 @@ class PresenceUpdate extends Part
     protected $fillable = ['user', 'guild_id', 'status', 'activities', 'client_status'];
 
     /**
+     * @inheritDoc
+     */
+    protected $visible = ['member', 'roles', 'guild', 'game', 'desktop_status', 'mobile_status', 'web_status'];
+
+    /**
      * Gets the member attribute.
      *
-     * @return Member
+     * @return Member|null
      */
     protected function getMemberAttribute(): ?Member
     {
@@ -55,10 +65,9 @@ class PresenceUpdate extends Part
     /**
      * Gets the user attribute.
      *
-     * @return User       The user that had their presence updated.
-     * @throws \Exception
+     * @return User The user that had their presence updated.
      */
-    protected function getUserAttribute(): ?User
+    protected function getUserAttribute(): User
     {
         if ($user = $this->discord->users->get('id', $this->attributes['user']->id)) {
             return $user;
@@ -74,17 +83,7 @@ class PresenceUpdate extends Part
      */
     protected function getRolesAttribute(): Collection
     {
-        $roles = new Collection();
-
-        if (! $this->guild) {
-            $roles->fill($this->attributes['roles']);
-        } else {
-            foreach ($this->attributes['roles'] as $role) {
-                $roles->push($this->guild->roles->get('id', $role));
-            }
-        }
-
-        return $roles;
+        return $this->member->roles ?? new Collection();
     }
 
     /**
@@ -92,7 +91,7 @@ class PresenceUpdate extends Part
      *
      * @return Guild The guild that the user was in.
      */
-    protected function getGuildAttribute(): ?Guild
+    protected function getGuildAttribute(): Guild
     {
         return $this->discord->guilds->get('id', $this->guild_id);
     }
@@ -100,7 +99,7 @@ class PresenceUpdate extends Part
     /**
      * Gets the game attribute.
      *
-     * @return ?Activity The game attribute.
+     * @return Activity|null The game attribute.
      */
     protected function getGameAttribute(): ?Part
     {
@@ -124,16 +123,32 @@ class PresenceUpdate extends Part
     }
 
     /**
-     * Gets the premium since timestamp.
+     * Gets the status of the user on their desktop client.
      *
-     * @return Carbon|null
+     * @return string|null
      */
-    protected function getPremiumSinceAttribute(): ?Carbon
+    protected function getDesktopStatusAttribute(): ?string
     {
-        if (! isset($this->attributes['premium_since'])) {
-            return null;
-        }
+        return $this->client_status->desktop ?? null;
+    }
 
-        return Carbon::parse($this->attributes['premium_since']);
+    /**
+     * Gets the status of the user on their mobile client.
+     *
+     * @return string|null
+     */
+    protected function getMobileStatusAttribute(): ?string
+    {
+        return $this->client_status->mobile ?? null;
+    }
+
+    /**
+     * Gets the status of the user on their web client.
+     *
+     * @return string|null
+     */
+    protected function getWebStatusAttribute(): ?string
+    {
+        return $this->client_status->web ?? null;
     }
 }

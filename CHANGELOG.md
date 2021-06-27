@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 7.0.0
+
+This release contains breaking changes regarding messages.
+
+- Read the [conversion guide](V7_CONVERSION.md) for a guide on how to upgrade from v6.x to v7.
+    - If you are coming from v5.x, also read the [v6.x conversion guide](V6_CONVERSION.md).
+
+- Upgraded to Discord API v9.
+- Added `MessagBuilder`.
+    - See the conversion guide for more information - most functions that send messages now take message builders instead of seperate parameters.
+- Added support for [Discord Threads](https://discord.com/developers/docs/topics/threads).
+    - `$message->channel` will now return a `Channel` or `Thread` object.
+- Added [guild feature flags](https://github.com/discord-php/DiscordPHP/blob/28d741c47e81f9957a3b0d92c2f187d81d26c9c8/src/Discord/Parts/Guild/Guild.php#L75-L95).
+- Removed `premium_since` attribute from the `PresenceUpdate` object.
+    - This would have been null since v6 anyway.
+
 ## Version 6.0.1
 
 - Fixed `Message::member` attribute returning a `User` - #523 @davidcole1340

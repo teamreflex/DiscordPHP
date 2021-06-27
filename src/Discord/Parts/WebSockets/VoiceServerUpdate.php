@@ -17,10 +17,10 @@ use Discord\Parts\Part;
 /**
  * Tells the client that the voice channel's server has changed.
  *
- * @property string                     $token    The new client voice token.
- * @property \Discord\Parts\Guild\Guild $guild    The guild affected by the change.
- * @property string                     $guild_id The unique identifier of the guild that was affected by the change.
- * @property string                     $endpoint The new voice server endpoint.
+ * @property string $token    The new client voice token.
+ * @property Guild  $guild    The guild affected by the change.
+ * @property string $guild_id The unique identifier of the guild that was affected by the change.
+ * @property string $endpoint The new voice server endpoint.
  */
 class VoiceServerUpdate extends Part
 {
