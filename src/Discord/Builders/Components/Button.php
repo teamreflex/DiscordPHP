@@ -15,7 +15,9 @@ use Discord\Discord;
 use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Interactions\Interaction;
 use Discord\WebSockets\Event;
+use Exception;
 use InvalidArgumentException;
+use React\Promise\PromiseInterface;
 
 use function Discord\poly_strlen;
 
@@ -108,11 +110,11 @@ class Button extends Component
      *
      * @param int $style Style of the button.
      *
-     * @return static
+     * @return self
      */
-    public static function new(int $style): static
+    public static function new(int $style): self
     {
-        return new static($style);
+        return new self($style);
     }
 
     /**
@@ -123,9 +125,9 @@ class Button extends Component
      *
      * @param int $style
      *
-     * @return static
+     * @return $this
      */
-    public function setStyle(int $style): static
+    public function setStyle(int $style): self
     {
         if (! in_array($style, [
             self::STYLE_PRIMARY,
@@ -155,7 +157,7 @@ class Button extends Component
      *
      * @return $this
      */
-    public function setLabel(string $label): static
+    public function setLabel(string $label): self
     {
         if (poly_strlen($label) > 80) {
             throw new InvalidArgumentException('Label must be maximum 80 characters.');
@@ -173,7 +175,7 @@ class Button extends Component
      *
      * @return $this
      */
-    public function setEmoji(Emoji $emoji): static
+    public function setEmoji(Emoji $emoji): self
     {
         $this->emoji = [
             'name' => $emoji->name,
@@ -191,7 +193,7 @@ class Button extends Component
      *
      * @return $this
      */
-    public function setCustomId(string $custom_id): static
+    public function setCustomId(string $custom_id): self
     {
         if ($this->style == Button::STYLE_LINK) {
             throw new InvalidArgumentException('You cannot set the custom ID of a link button.');
@@ -207,13 +209,13 @@ class Button extends Component
     }
 
     /**
-     * Sets the URL of the button. Only valid for link buttons.
+     * Sets the URL of the button. Only valid for link buttons.tatic.
      *
      * @param string $url
      *
      * @return $this
      */
-    public function setUrl(string $url): static
+    public function setUrl(string $url): self
     {
         if ($this->style != Button::STYLE_LINK) {
             throw new InvalidArgumentException('You cannot set the URL of a non-link button.');
@@ -231,7 +233,7 @@ class Button extends Component
      *
      * @return $this
      */
-    public function setDisabled(bool $disabled): static
+    public function setDisabled(bool $disabled): self
     {
         $this->disabled = $disabled;
 
@@ -241,6 +243,10 @@ class Button extends Component
     /**
      * Sets the callable listener for the button. The `$callback` will be called when the button
      * is pressed.
+     *
+     * If you do not respond to or acknowledge the `Interaction`, it will be acknowledged for you.
+     * Note that if you intend to respond to or acknowledge the interaction inside a promise, you should
+     * return a promise that resolves *after* you respond or acknowledge.
      *
      * The callback will only be called once with the `$oneOff` parameter set to true.
      * This can be changed to false, and the callback will be called each time the button is pressed.
@@ -254,7 +260,7 @@ class Button extends Component
      *
      * @return $this
      */
-    public function setListener(?callable $callback, Discord $discord, bool $oneOff = true): static
+    public function setListener(?callable $callback, Discord $discord, bool $oneOff = false): self
     {
         if ($this->style == Button::STYLE_LINK) {
             throw new InvalidArgumentException('You cannot add a listener to a link button.');
@@ -266,7 +272,7 @@ class Button extends Component
 
         // Remove any existing listener
         if ($this->listener) {
-            $discord->removeListener(Event::INTERACTION_CREATE, $this->listener);
+            $this->discord->removeListener(Event::INTERACTION_CREATE, $this->listener);
         }
 
         $this->discord = $discord;
@@ -275,12 +281,25 @@ class Button extends Component
             return $this;
         }
 
-        $this->listener = function (Interaction $interaction) use ($discord, $callback, $oneOff) {
+        $this->listener = function (Interaction $interaction) use ($callback, $oneOff) {
             if ($interaction->data->component_type == Component::TYPE_BUTTON && $interaction->data->custom_id == $this->custom_id) {
-                $callback($interaction);
+                $response = $callback($interaction);
+                $ack = function () use ($interaction) {
+                    // attempt to acknowledge interaction if it has not already been responded to.
+                    try {
+                        $interaction->acknowledge();
+                    } catch (exception $e) {
+                    }
+                };
+
+                if ($response instanceof PromiseInterface) {
+                    $response->then($ack);
+                } else {
+                    $ack();
+                }
 
                 if ($oneOff) {
-                    $discord->removeListener(Event::INTERACTION_CREATE, $this->listener);
+                    $this->removeListener();
                 }
             }
         };
@@ -288,6 +307,16 @@ class Button extends Component
         $discord->on(Event::INTERACTION_CREATE, $this->listener);
 
         return $this;
+    }
+
+    /**
+     * Removes the listener from the button.
+     *
+     * @return $this
+     */
+    public function removeListener(): self
+    {
+        return $this->setListener(null, $this->discord);
     }
 
     /**
@@ -325,15 +354,5 @@ class Button extends Component
         }
 
         return $content;
-    }
-
-    /**
-     * Generates a UUID which can be used as the custom ID.
-     *
-     * @return string
-     */
-    public static function generateUuid(): string
-    {
-        return uniqid(time(), true);
     }
 }

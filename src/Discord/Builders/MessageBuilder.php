@@ -13,6 +13,7 @@ namespace Discord\Builders;
 
 use Discord\Builders\Components\ActionRow;
 use Discord\Builders\Components\Component;
+use Discord\Builders\Components\SelectMenu;
 use Discord\Exceptions\FileNotFoundException;
 use Discord\Helpers\Multipart;
 use Discord\Http\Exceptions\RequestFailedException;
@@ -242,14 +243,14 @@ class MessageBuilder implements JsonSerializable
     /**
      * Adds a component to the message.
      *
-     * @param Component $component
+     * @param Component $component Component to add.
      *
      * @return $this
      */
     public function addComponent(Component $component): self
     {
-        if (! ($component instanceof ActionRow)) {
-            throw new InvalidArgumentException('You can only add action rows as components to messages. Put your components inside an action row.');
+        if (! ($component instanceof ActionRow || $component instanceof SelectMenu)) {
+            throw new InvalidArgumentException('You can only add action rows and select menus as components to messages. Put your other components inside an action row.');
         }
 
         if (count($this->components) >= 5) {
@@ -257,6 +258,22 @@ class MessageBuilder implements JsonSerializable
         }
 
         $this->components[] = $component;
+
+        return $this;
+    }
+
+    /**
+     * Removes a component from the message.
+     *
+     * @param Component $component Component to remove.
+     *
+     * @return $this
+     */
+    public function removeComponent(Component $component): self
+    {
+        if (($idx = array_search($component, $this->components)) !== null) {
+            array_splice($this->components, $idx, 1);
+        }
 
         return $this;
     }
@@ -356,7 +373,9 @@ class MessageBuilder implements JsonSerializable
     public function jsonSerialize(): array
     {
         $empty = count($this->files) < 1;
-        $content = [];
+        $content = [
+            'components' => $this->components,
+        ];
 
         if ($this->content) {
             $content['content'] = $this->content;
@@ -381,10 +400,6 @@ class MessageBuilder implements JsonSerializable
                 'message_id' => $this->replyTo->id,
                 'channel_id' => $this->replyTo->channel_id,
             ];
-        }
-
-        if (count($this->components) > 0) {
-            $content['components'] = $this->components;
         }
 
         if ($empty) {

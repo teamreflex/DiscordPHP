@@ -25,24 +25,28 @@ class ActionRow extends Component
     /**
      * Creates a new action row.
      *
-     * @return static
+     * @return self
      */
-    public static function new(): static
+    public static function new(): self
     {
-        return new static();
+        return new self();
     }
 
     /**
      * Adds a component to the action row.
      *
-     * @param Component $component
+     * @param Component $component Component to add.
      *
      * @return $this
      */
-    public function addComponent(Component $component)
+    public function addComponent(Component $component): self
     {
         if ($component instanceof ActionRow) {
             throw new InvalidArgumentException('You cannot add another `ActionRow` to this action row.');
+        }
+
+        if ($component instanceof SelectMenu) {
+            throw new InvalidArgumentException('Cannot add a select menu to an action row.');
         }
 
         if (count($this->components) >= 5) {
@@ -50,6 +54,22 @@ class ActionRow extends Component
         }
 
         $this->components[] = $component;
+
+        return $this;
+    }
+
+    /**
+     * Removes a component from the action row.
+     *
+     * @param Component $component Component to remove.
+     *
+     * @return $this
+     */
+    public function removeComponent(Component $component)
+    {
+        if (($idx = array_search($component, $this->components)) !== null) {
+            array_splice($this->components, $idx, 1);
+        }
 
         return $this;
     }

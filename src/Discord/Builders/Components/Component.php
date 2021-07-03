@@ -18,4 +18,14 @@ abstract class Component implements JsonSerializable
     public const TYPE_ACTION_ROW = 1;
     public const TYPE_BUTTON = 2;
     public const TYPE_SELECT_MENU = 3;
+
+    /**
+     * Generates a UUID which can be used for component custom IDs.
+     *
+     * @return string
+     */
+    protected static function generateUuid(): string
+    {
+        return uniqid(time(), true);
+    }
 }

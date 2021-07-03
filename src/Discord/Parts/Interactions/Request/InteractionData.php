@@ -21,6 +21,7 @@ use Discord\Repository\Interaction\OptionRepository;
  * @property string           $name           Name of the invoked command.
  * @property Resolved|null    $resolved       Resolved users, members, roles and channels that are relevant.
  * @property OptionRepository $options        Parameters and values from the user.
+ * @property string[]|null    $values         Values selected in a select menu.
  * @property string|null      $custom_id      Custom ID the component was created for. Not used for slash commands.
  * @property int|null         $component_type Type of the component. Not used for slash commands.
  */
@@ -29,7 +30,7 @@ class InteractionData extends Part
     /**
      * @inheritdoc
      */
-    protected $fillable = ['id', 'name', 'resolved', 'options', 'custom_id', 'component_type'];
+    protected $fillable = ['id', 'name', 'resolved', 'options', 'values', 'custom_id', 'component_type'];
 
     /**
      * @inheritdoc
