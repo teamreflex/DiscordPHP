@@ -262,7 +262,7 @@ class SelectMenu extends Component
                     // attempt to acknowledge interaction if it has not already been responded to.
                     try {
                         $interaction->acknowledge();
-                    } catch (exception $e) {
+                    } catch (Exception $e) {
                     }
                 };
 
